@@ -195,7 +195,6 @@ else: #Zigzag pattern
     painter.goto(last_x2,last_y2)
   painter.end_fill()
 
-
 #Remake the center of the painting (code breaks if the earlier one doesn't run I have no idea why but if it works dont change it)
 
 painter.setheading(0)
@@ -211,7 +210,53 @@ painter.goto(starting_x, end_y)
 painter.goto(starting_x, starting_y)
 painter.end_fill()
 
+#Draw shapes in the canvas as "abstract" art
+color_list = ["black", "gray", "silver", "rosybrown", "firebrick", #List of every python color
+    "red", "darksalmon", "sienna", "sandybrown", "bisque", "tan",
+    "moccasin", "gold", "darkkhaki",
+    "olivedrab", "chartreuse", "palegreen", "darkgreen", "seagreen",
+    "mediumspringgreen", "paleturquoise", "darkcyan",
+    "darkturquoise", "deepskyblue", "slategray", "royalblue",
+    "navy", "blue", "mediumpurple", "darkorchid", "plum", 
+    "mediumvioletred", "palevioletred",
 
+    "grey", "lightgray", "lightcoral", "maroon", "mistyrose",
+    "coral", "seashell", "peachpuff", "darkorange", "navajowhite",
+    "orange", "darkgoldenrod", "lemonchiffon", "olive",
+    "yellowgreen", "lawngreen", "lightgreen", "mediumseagreen",
+    "mediumaquamarine", "mediumturquoise", "darkslategray",
+    "cadetblue", "skyblue", "dodgerblue", "slategray",
+    "darkblue", "slateblue", "darkviolet", "violet",
+    "fuchsia", "deeppink", "crimson",
+
+    "dimgray", "darkgray", "lightgrey", "indianred", "darkred",
+    "salmon", "orangered", "chocolate", "peru", "burlywood",
+    "blanchedalmond", "wheat", "goldenrod", "khaki",
+    "darkolivegreen", "forestgreen", "green", "springgreen",
+    "aquamarine", "darkslategray", "aqua", "powderblue",
+    "lightskyblue", "lightslategray", "lightsteelblue", "lavender",
+    "mediumblue", "darkslateblue", "blueviolet", "mediumpurple",
+    "purple", "magenta", "hotpink", "pink",
+
+    "dimgrey", "darkgrey", "gainsboro", "brown", "tomato",
+    "lightsalmon", "saddlebrown", "papayawhip",
+    "cornsilk", "palegoldenrod", "lightyellow", "yellow",
+    "greenyellow", "darkseagreen", "limegreen", "lime",
+    "turquoise", "lightcyan", "teal", "cyan", "lightblue", "steelblue",
+    "lightslategray", "cornflowerblue", "midnightblue",
+    "mediumslateblue", "indigo", "thistle", "darkmagenta", "orchid",
+    "lightpink"]
+
+for shapes in range(200):
+  painter.setheading(0)
+  painter.penup()
+  painter.pencolor(random.choice(color_list))
+  painter.fillcolor(random.choice(color_list))
+  painter.goto(random.randint(starting_x+15,end_x-15),random.randint(starting_y+15,end_y-15))
+  painter.pendown()
+  painter.begin_fill()
+  painter.circle(random.randint(5,20),360,random.randint(3,15))
+  painter.end_fill()
 
 
 
