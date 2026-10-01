@@ -5,7 +5,10 @@ wn = trtl.Screen()
 wn.tracer(0)
 painter = trtl.Turtle()
 painter.speed(0)
-
+paintbrush = ((-1, 7), (1, 7), (1, -3), (3, -6), 
+                  (2, -7), (1, -6), (0, -7), (-1, -6), (-2,-7), (-3,-6), (-1,-3), (-1,7))
+wn.register_shape("paintbrush", paintbrush)
+painter.shape("paintbrush")
 color_list = ["black", "gray", "silver", "rosybrown", "firebrick", #List of every python color
     "red", "darksalmon", "sienna", "sandybrown", "bisque", "tan",
     "moccasin", "gold", "darkkhaki",
@@ -62,7 +65,6 @@ painter.goto(starting_x, end_y)
 painter.goto(starting_x, starting_y)
 
 #Draw Frame Design
-wn.tracer(1)
 frame_design = trtl.textinput("MAKING A PAINTING","Frame design, Wavy(W) or ZigZag(Z)?").lower()
 painter.fillcolor("gold")
 last_x = 0
@@ -249,6 +251,7 @@ painter.goto(starting_x, starting_y)
 painter.end_fill()
 
 #Draw shapes in the canvas as "abstract" art
+wn.tracer(1)
 for shapes in range(200):
   painter.setheading(0)
   painter.penup()
@@ -261,8 +264,9 @@ for shapes in range(200):
   painter.end_fill()
 
 
-
-
+painter.penup()
+painter.goto(250, 0)
+painter.setheading(90)
 
 
 
