@@ -2,7 +2,9 @@
 import turtle as trtl
 import random as rand
 from functools import partial
+import keyboard as kb
 wn = trtl.Screen()
+wn.tracer(0)
 #---------------------------#
 
 #--------------Custom shapes and images-----------------#
@@ -14,9 +16,11 @@ wn.register_shape("explosion", explosion)
 #------Initialize Variables---------#
 ammo = 10
 loaded_ammo = 2
+max_ammo_loaded = 2
 damage = 1
 size_list = ["small", "small", "small", "small", "small"]
-enemy_health_list = [1,1,1,1,1]
+small_enemy_health = 1
+big_enemy_health = 5
 health = 100
 wave = 0
 enemy_list = []
@@ -50,8 +54,11 @@ for s in shot_color_list:
 
 #--------------------Functions------------------------------#
 def update_counters():
+  ammo_counter.clear()
+  reloader.clear()
+  health_counter.clear()
   ammo_counter.write("Ammo:" + str(ammo), align='center', font=("Arial", 20, "normal"))
-  reloader.write(str(loaded_ammo) + "/2", align='center', font=("Arial", 20, "normal"))
+  reloader.write(str(loaded_ammo) + "/" + str(max_ammo_loaded), align='center', font=("Arial", 20, "normal"))
   health_counter.write("Health:" + str(health), align='center', font=("Arial", 20, "normal"))
 
 def new_enemies():
@@ -60,6 +67,7 @@ def new_enemies():
     enemy = trtl.Turtle(shape="circle")
     enemy.speed(0)
     enemy.penup()
+    enemy.onclick(partial(enemy_shot, enemy))
     enemy_list.append(enemy)
     if e == "big":
       enemy.shapesize(3)
@@ -68,24 +76,46 @@ def move_enemies():
   for enemy in enemy_list:
     enemy.goto(rand.randint(-225,225),rand.randint(-200,225))
 
-
+def enemy_shot(enemy, x, y):
+  global ammo, loaded_ammo
+  clicked_enemy = enemy
+  if ammo != 0:
+    if loaded_ammo != 0:
+      loaded_ammo -= 1
+      update_counters()
+      if clicked_enemy in enemy_list:
+        enemy_list.remove(clicked_enemy)
+        clicked_enemy.hideturtle()
+      move_enemies()
+      
 def shot_vfx(x,y):
   for shot_sprite in shot_sprite_list:
     shot_sprite.goto(x+rand.randint(-10,10),y+rand.randint(-10,10))
     shot_sprite.showturtle()
   for shot_sprite in shot_sprite_list:
     shot_sprite.hideturtle()
+
+def reload():
+  global ammo, loaded_ammo, max_ammo_loaded
+  while loaded_ammo != max_ammo_loaded:
+    loaded_ammo += 1
+    ammo -= 1
+  update_counters()
+
 #----------------------------------------------------------#
 
+#------------------Events----------------#
+wn.tracer(1)
 new_enemies()
+move_enemies()
 
-
-
+wn.listen()
 wn.onclick(shot_vfx)
-
+wn.onkeypress(reload, "r")
 
 
 
 
 wn.setup(width=500, height=500)
+wn.cv._rootwindow.resizable(False, False)
 wn.mainloop()
