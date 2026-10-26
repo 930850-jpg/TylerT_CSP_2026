@@ -2,6 +2,7 @@
 import turtle as trtl
 import random as rand
 from functools import partial
+import time
 import keyboard as kb
 wn = trtl.Screen()
 wn.tracer(0)
@@ -17,13 +18,19 @@ wn.register_shape("explosion", explosion)
 ammo = 10
 loaded_ammo = 2
 max_ammo_loaded = 2
+reload_delay = 1
 damage = 1
+health = 100
+#----#
 size_list = ["small", "small", "small", "small", "small"]
 small_enemy_health = 1
 big_enemy_health = 5
-health = 100
+small_enemy_list = []
+big_enemy_list = []
+#----#
 wave = 0
-enemy_list = []
+small_defeated = 0
+big_defeated = 0
 #-----------------------------------#
 
 #-----Initialize Turtles for writing and sprites-----#
@@ -40,6 +47,9 @@ reloader.hideturtle()
 reloader.penup()
 reloader.goto(-180,-225)
 wave_counter = trtl.Turtle()
+wave_counter.hideturtle()
+wave_counter.penup()
+wave_counter.goto(-5,200)
 shot_color_list = ["yellow" ,"maroon", "orange"]
 shot_sprite_list = []
 for s in shot_color_list:
@@ -57,37 +67,71 @@ def update_counters():
   ammo_counter.clear()
   reloader.clear()
   health_counter.clear()
-  ammo_counter.write("Ammo:" + str(ammo), align='center', font=("Arial", 20, "normal"))
+  wave_counter.clear()
+  ammo_counter.write("Ammo: " + str(ammo), align='center', font=("Arial", 20, "normal"))
   reloader.write(str(loaded_ammo) + "/" + str(max_ammo_loaded), align='center', font=("Arial", 20, "normal"))
-  health_counter.write("Health:" + str(health), align='center', font=("Arial", 20, "normal"))
+  health_counter.write("Health: " + str(health), align='center', font=("Arial", 20, "normal"))
+  wave_counter.write("Wave: " + str(wave), align='center', font=("Arial", 20, "normal"))
 
 def new_enemies():
   global enemy, enemy_list
   for e in size_list:
-    enemy = trtl.Turtle(shape="circle")
-    enemy.speed(0)
-    enemy.penup()
-    enemy.onclick(partial(enemy_shot, enemy))
-    enemy_list.append(enemy)
+    if e =="small":
+      enemy = trtl.Turtle(shape="circle")
+      enemy.speed(0)
+      enemy.penup()
+      enemy.onclick(partial(small_enemy_shot, enemy))
+      small_enemy_list.append(enemy)
     if e == "big":
+      enemy = trtl.Turtle(shape="circle")
       enemy.shapesize(3)
+      enemy.speed(0)
+      enemy.penup()
+      enemy.onclick(partial(big_enemy_shot, enemy))
+      big_enemy_list.append(enemy)
+
 
 def move_enemies():
-  for enemy in enemy_list:
-    enemy.goto(rand.randint(-225,225),rand.randint(-200,225))
+  for enemy in small_enemy_list:
+    enemy.goto(rand.randint(-100,150),rand.randint(-100,150))
+  for enemy in big_enemy_list:
+    enemy.goto(rand.randint(-100,150),rand.randint(-100,150))
 
-def enemy_shot(enemy, x, y):
-  global ammo, loaded_ammo
+def small_enemy_shot(enemy, x, y):
+  global ammo, loaded_ammo, small_defeated, big_defeated
   clicked_enemy = enemy
   if ammo != 0:
     if loaded_ammo != 0:
       loaded_ammo -= 1
       update_counters()
-      if clicked_enemy in enemy_list:
-        enemy_list.remove(clicked_enemy)
+      if clicked_enemy in small_enemy_list:
+        small_enemy_list.remove(clicked_enemy)
         clicked_enemy.hideturtle()
       move_enemies()
-      
+    if small_enemy_list == []:
+      small_defeated = 1
+    if big_defeated == 1 and small_defeated == 1:
+      end_wave()
+    elif small_defeated == 1 and big_enemy_list == []:
+      end_wave()
+    
+def big_enemy_shot(enemy, x, y):
+  global ammo, loaded_ammo, big_enemy_health, big_defeated, small_defeated
+  clicked_enemy = enemy
+  if ammo != 0:
+    if loaded_ammo != 0:
+      loaded_ammo -= 1
+      big_enemy_health -= damage
+      update_counters()
+      if clicked_enemy in big_enemy_list:
+        if big_enemy_health <= 0:
+          big_enemy_list.remove(clicked_enemy)
+          clicked_enemy.hideturtle()
+      move_enemies()
+    if big_enemy_list == []:
+      big_defeated = 1
+    if big_defeated == 1 and small_defeated == 1:
+      end_wave()
 def shot_vfx(x,y):
   for shot_sprite in shot_sprite_list:
     shot_sprite.goto(x+rand.randint(-10,10),y+rand.randint(-10,10))
@@ -98,10 +142,22 @@ def shot_vfx(x,y):
 def reload():
   global ammo, loaded_ammo, max_ammo_loaded
   while loaded_ammo != max_ammo_loaded:
+    time.sleep(reload_delay)
     loaded_ammo += 1
     ammo -= 1
-  update_counters()
+    update_counters()
 
+def new_wave():
+  update_counters()
+  new_enemies()
+  move_enemies()
+
+def end_wave():
+  global ammo, loaded_ammo, max_ammo_loaded
+  ammo += 5
+  loaded_ammo = max_ammo_loaded
+  wave_counter.clear()
+  wave_counter.write("WAVE: " + str(wave) + " DEFEATED", align='center', font=("Arial", 20, "normal"))
 #----------------------------------------------------------#
 
 #------------------Events----------------#
