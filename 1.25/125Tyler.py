@@ -37,15 +37,15 @@ big_defeated = 0
 ammo_counter = trtl.Turtle()
 ammo_counter.hideturtle()
 ammo_counter.penup()
-ammo_counter.goto(180,-225)
+ammo_counter.goto(160,-225)
 health_counter = trtl.Turtle()
 health_counter.hideturtle()
 health_counter.penup()
-health_counter.goto(0,-225)
+health_counter.goto(-160,-225)
 reloader = trtl.Turtle()
 reloader.hideturtle()
 reloader.penup()
-reloader.goto(-180,-225)
+reloader.goto(160,-200)
 wave_counter = trtl.Turtle()
 wave_counter.hideturtle()
 wave_counter.penup()
@@ -74,7 +74,7 @@ def update_counters():
   wave_counter.write("Wave: " + str(wave), align='center', font=("Arial", 20, "normal"))
 
 def new_enemies():
-  global enemy, enemy_list
+  global enemy, big_enemy, small_enemy_list, big_enemy_list
   for e in size_list:
     if e =="small":
       enemy = trtl.Turtle(shape="circle")
@@ -83,20 +83,25 @@ def new_enemies():
       enemy.onclick(partial(small_enemy_shot, enemy))
       small_enemy_list.append(enemy)
     if e == "big":
-      enemy = trtl.Turtle(shape="circle")
-      enemy.shapesize(3)
-      enemy.speed(0)
-      enemy.penup()
-      enemy.onclick(partial(big_enemy_shot, enemy))
-      big_enemy_list.append(enemy)
-
+      big_enemy = trtl.Turtle(shape="circle")
+      big_enemy.shapesize(3)
+      big_enemy.speed(0)
+      big_enemy.penup()
+      big_enemy.onclick(partial(big_enemy_shot, big_enemy))
+      big_enemy_list.append(big_enemy)
 
 def move_enemies():
+  global enemy, big_enemy
   for enemy in small_enemy_list:
     enemy.goto(rand.randint(-100,150),rand.randint(-100,150))
-  for enemy in big_enemy_list:
-    enemy.goto(rand.randint(-100,150),rand.randint(-100,150))
-
+    if (abs(enemy.xcor() - enemy.xcor()) < 30) and (abs(enemy.ycor() - enemy.ycor()) < 30):
+      enemy.goto(enemy.xcor() + 50, enemy.ycor() + 50)
+  if big_enemy_list != []:
+    for big_enemy in big_enemy_list:
+      big_enemy.goto(rand.randint(-100,150),rand.randint(-100,150))
+      if (abs(enemy.xcor() - big_enemy.xcor()) < 30) and (abs(enemy.ycor() - big_enemy.ycor()) < 30):
+        enemy.goto(enemy.xcor() + 50, enemy.ycor() + 50)
+    
 def small_enemy_shot(enemy, x, y):
   global ammo, loaded_ammo, small_defeated, big_defeated
   clicked_enemy = enemy
@@ -115,9 +120,9 @@ def small_enemy_shot(enemy, x, y):
     elif small_defeated == 1 and big_enemy_list == []:
       end_wave()
     
-def big_enemy_shot(enemy, x, y):
+def big_enemy_shot(big_enemy, x, y):
   global ammo, loaded_ammo, big_enemy_health, big_defeated, small_defeated
-  clicked_enemy = enemy
+  clicked_enemy = big_enemy
   if ammo != 0:
     if loaded_ammo != 0:
       loaded_ammo -= 1
@@ -132,6 +137,7 @@ def big_enemy_shot(enemy, x, y):
       big_defeated = 1
     if big_defeated == 1 and small_defeated == 1:
       end_wave()
+
 def shot_vfx(x,y):
   for shot_sprite in shot_sprite_list:
     shot_sprite.goto(x+rand.randint(-10,10),y+rand.randint(-10,10))
@@ -166,7 +172,9 @@ new_enemies()
 move_enemies()
 
 wn.listen()
+
 wn.onclick(shot_vfx)
+
 wn.onkeypress(reload, "r")
 
 
