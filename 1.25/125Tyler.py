@@ -29,8 +29,14 @@ small_enemy_list = []
 big_enemy_list = []
 #----#
 wave = 0
+wave_timer = 15000
 small_defeated = 0
 big_defeated = 0
+ammo_after_wave = 5
+#----#
+upgrade_list = ["+1 to weapon damage", "+1 ammo to barrel", "+25 health", "+5 extra ammo every wave","wave timer increase by 5"]
+late_upgrade_list = ["lower enemy health by 2", "faster reload by 0.5", "remove a small enemy"]
+debuff_list = ["add small enemy", "small enemy turns into big enemy", "2x small enemy health", "2x big enemy health"]
 #-----------------------------------#
 
 #-----Initialize Turtles for writing and sprites-----#
@@ -50,6 +56,10 @@ wave_counter = trtl.Turtle()
 wave_counter.hideturtle()
 wave_counter.penup()
 wave_counter.goto(-5,200)
+upgrade_writer = trtl.Turtle()
+upgrade_writer.hideturtle()
+upgrade_writer.penup()
+upgrade_writer.goto(0,150)
 shot_color_list = ["yellow" ,"maroon", "orange"]
 shot_sprite_list = []
 for s in shot_color_list:
@@ -78,6 +88,7 @@ def new_enemies():
   for e in size_list:
     if e =="small":
       enemy = trtl.Turtle(shape="circle")
+      big_enemy.shapesize(1.5)
       enemy.speed(0)
       enemy.penup()
       enemy.onclick(partial(small_enemy_shot, enemy))
@@ -93,25 +104,28 @@ def new_enemies():
 def move_enemies():
   global enemy, big_enemy
   for enemy in small_enemy_list:
-    enemy.goto(rand.randint(-100,150),rand.randint(-100,150))
-    if (abs(enemy.xcor() - enemy.xcor()) < 30) and (abs(enemy.ycor() - enemy.ycor()) < 30):
+    enemy.goto(rand.randint(-200,200),rand.randint(-100,150))
+    if (abs(enemy.xcor() - enemy.xcor()) < 40) and (abs(enemy.ycor() - enemy.ycor()) < 40):
       enemy.goto(enemy.xcor() + 50, enemy.ycor() + 50)
   if big_enemy_list != []:
     for big_enemy in big_enemy_list:
-      big_enemy.goto(rand.randint(-100,150),rand.randint(-100,150))
-      if (abs(enemy.xcor() - big_enemy.xcor()) < 30) and (abs(enemy.ycor() - big_enemy.ycor()) < 30):
+      big_enemy.goto(rand.randint(-200,200),rand.randint(-100,150))
+      if (abs(enemy.xcor() - big_enemy.xcor()) < 40) and (abs(enemy.ycor() - big_enemy.ycor()) < 40):
         enemy.goto(enemy.xcor() + 50, enemy.ycor() + 50)
     
 def small_enemy_shot(enemy, x, y):
-  global ammo, loaded_ammo, small_defeated, big_defeated
+  global ammo, loaded_ammo, small_defeated, big_defeated, small_enemy_health
   clicked_enemy = enemy
   if ammo != 0:
     if loaded_ammo != 0:
       loaded_ammo -= 1
+      small_enemy_health -= damage
       update_counters()
       if clicked_enemy in small_enemy_list:
-        small_enemy_list.remove(clicked_enemy)
-        clicked_enemy.hideturtle()
+        if small_enemy_health <=0:
+          small_enemy_health = 1
+          small_enemy_list.remove(clicked_enemy)
+          clicked_enemy.hideturtle()
       move_enemies()
     if small_enemy_list == []:
       small_defeated = 1
@@ -121,7 +135,7 @@ def small_enemy_shot(enemy, x, y):
       end_wave()
     
 def big_enemy_shot(big_enemy, x, y):
-  global ammo, loaded_ammo, big_enemy_health, big_defeated, small_defeated
+  global ammo, loaded_ammo, big_enemy_health, big_defeated, small_defeated, damage
   clicked_enemy = big_enemy
   if ammo != 0:
     if loaded_ammo != 0:
@@ -130,6 +144,7 @@ def big_enemy_shot(big_enemy, x, y):
       update_counters()
       if clicked_enemy in big_enemy_list:
         if big_enemy_health <= 0:
+          big_enemy_health = 5
           big_enemy_list.remove(clicked_enemy)
           clicked_enemy.hideturtle()
       move_enemies()
@@ -154,6 +169,8 @@ def reload():
     update_counters()
 
 def new_wave():
+  global wave
+  wave += 1
   update_counters()
   new_enemies()
   move_enemies()
@@ -164,12 +181,56 @@ def end_wave():
   loaded_ammo = max_ammo_loaded
   wave_counter.clear()
   wave_counter.write("WAVE: " + str(wave) + " DEFEATED", align='center', font=("Arial", 20, "normal"))
+  upgrades()
+
+def upgrades():
+  global ammo_after_wave, damage, health, max_ammo_loaded, wave_timer
+  upgrade_pick1 = rand.choice(upgrade_list)
+  upgrade_list.remove(upgrade_pick1)
+  upgrade_pick2 = rand.choice(upgrade_list)
+  upgrade_list.remove(upgrade_pick2)
+  upgrade_pick3 = rand.choice(upgrade_list)
+  upgrade_list.remove(upgrade_pick3)
+  upgrade_writer.write("Upgrades:", align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.goto(0, 100)
+  upgrade_writer.write("1: " + str(upgrade_pick1), align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.goto(0, 50)
+  upgrade_writer.write("2: " + str(upgrade_pick2), align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.goto(0, 0)
+  upgrade_writer.write("3: " + str(upgrade_pick3), align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.goto(0, 150)
+  upgrade_chosen = str(trtl.textinput("Which upgrade are you choosing?", "Enter 1,2, or 3"))
+  print(upgrade_chosen)
+  while upgrade_chosen not in upgrade_list:
+    if upgrade_chosen == "1":
+      upgrade_chosen = upgrade_pick1
+      break
+    elif upgrade_chosen == "2":
+      upgrade_chosen = upgrade_pick2
+      break
+    elif upgrade_chosen == "3":
+      upgrade_chosen = upgrade_pick3
+      break
+    else:
+      upgrade_chosen = trtl.textinput("Please choose an upgrade.", "Enter 1,2, or 3")
+  if upgrade_chosen == "+1 to weapon damage":
+    damage += 1
+  elif upgrade_chosen == "+1 ammo to barrel":
+    max_ammo_loaded +=1
+  elif upgrade_chosen == "+25 health":
+    health +=25
+  elif upgrade_chosen == "+5 extra ammo every wave":
+    ammo_after_wave += 5
+  elif upgrade_chosen == "wave timer increase by 5":
+    wave_timer += 5000
+  upgrade_list.append(upgrade_pick1)
+  upgrade_list.append(upgrade_pick2)
+  upgrade_list.append(upgrade_pick3)
 #----------------------------------------------------------#
 
 #------------------Events----------------#
 wn.tracer(1)
-new_enemies()
-move_enemies()
+new_wave()
 
 wn.listen()
 
