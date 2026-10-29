@@ -23,8 +23,10 @@ damage = 1
 health = 100
 #----#
 size_list = ["small", "small", "small", "small", "small"]
+initial_small_enemy_health = 1
 small_enemy_health = 1
 big_enemy_health = 5
+initial_big_enemy_health = 5
 small_enemy_list = []
 big_enemy_list = []
 #----#
@@ -88,7 +90,7 @@ def new_enemies():
   for e in size_list:
     if e =="small":
       enemy = trtl.Turtle(shape="circle")
-      big_enemy.shapesize(1.5)
+      enemy.shapesize(1.5)
       enemy.speed(0)
       enemy.penup()
       enemy.onclick(partial(small_enemy_shot, enemy))
@@ -104,14 +106,14 @@ def new_enemies():
 def move_enemies():
   global enemy, big_enemy
   for enemy in small_enemy_list:
-    enemy.goto(rand.randint(-200,200),rand.randint(-100,150))
+    enemy.goto(rand.randint(-150,150),rand.randint(-100,150))
     if (abs(enemy.xcor() - enemy.xcor()) < 40) and (abs(enemy.ycor() - enemy.ycor()) < 40):
-      enemy.goto(enemy.xcor() + 50, enemy.ycor() + 50)
+      enemy.goto(enemy.xcor() - 50, enemy.ycor() + 50)
   if big_enemy_list != []:
     for big_enemy in big_enemy_list:
-      big_enemy.goto(rand.randint(-200,200),rand.randint(-100,150))
+      big_enemy.goto(rand.randint(-150,150),rand.randint(-100,150))
       if (abs(enemy.xcor() - big_enemy.xcor()) < 40) and (abs(enemy.ycor() - big_enemy.ycor()) < 40):
-        enemy.goto(enemy.xcor() + 50, enemy.ycor() + 50)
+        enemy.goto(enemy.xcor() - 50, enemy.ycor() + 50)
     
 def small_enemy_shot(enemy, x, y):
   global ammo, loaded_ammo, small_defeated, big_defeated, small_enemy_health
@@ -123,7 +125,7 @@ def small_enemy_shot(enemy, x, y):
       update_counters()
       if clicked_enemy in small_enemy_list:
         if small_enemy_health <=0:
-          small_enemy_health = 1
+          small_enemy_health = initial_small_enemy_health
           small_enemy_list.remove(clicked_enemy)
           clicked_enemy.hideturtle()
       move_enemies()
@@ -144,7 +146,7 @@ def big_enemy_shot(big_enemy, x, y):
       update_counters()
       if clicked_enemy in big_enemy_list:
         if big_enemy_health <= 0:
-          big_enemy_health = 5
+          big_enemy_health = initial_big_enemy_health
           big_enemy_list.remove(clicked_enemy)
           clicked_enemy.hideturtle()
       move_enemies()
@@ -171,17 +173,23 @@ def reload():
 def new_wave():
   global wave
   wave += 1
+  wn.listen()
   update_counters()
   new_enemies()
   move_enemies()
 
 def end_wave():
-  global ammo, loaded_ammo, max_ammo_loaded
-  ammo += 5
+  global ammo, loaded_ammo, max_ammo_loaded, small_defeated, big_defeated
+  small_defeated = 0
+  big_defeated = 0
+  ammo += ammo_after_wave
   loaded_ammo = max_ammo_loaded
   wave_counter.clear()
   wave_counter.write("WAVE: " + str(wave) + " DEFEATED", align='center', font=("Arial", 20, "normal"))
   upgrades()
+  if wave % 2 == 0:
+    debuffs()
+  new_wave()
 
 def upgrades():
   global ammo_after_wave, damage, health, max_ammo_loaded, wave_timer
@@ -200,7 +208,6 @@ def upgrades():
   upgrade_writer.write("3: " + str(upgrade_pick3), align='center', font=("Arial", 20, "normal"))
   upgrade_writer.goto(0, 150)
   upgrade_chosen = str(trtl.textinput("Which upgrade are you choosing?", "Enter 1,2, or 3"))
-  print(upgrade_chosen)
   while upgrade_chosen not in upgrade_list:
     if upgrade_chosen == "1":
       upgrade_chosen = upgrade_pick1
@@ -226,6 +233,55 @@ def upgrades():
   upgrade_list.append(upgrade_pick1)
   upgrade_list.append(upgrade_pick2)
   upgrade_list.append(upgrade_pick3)
+  upgrade_writer.clear()
+
+def debuffs():
+  global ammo_after_wave, damage, health, max_ammo_loaded, wave_timer, initial_big_enemy_health, initial_small_enemy_health, size_list
+  debuff_pick1 = rand.choice(debuff_list)
+  debuff_list.remove(debuff_pick1)
+  debuff_pick2 = rand.choice(debuff_list)
+  debuff_list.remove(debuff_pick2)
+  debuff_pick3 = rand.choice(debuff_list)
+  debuff_list.remove(debuff_pick3)
+  upgrade_writer.write("Upgrades:", align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.goto(0, 100)
+  upgrade_writer.write("1: " + str(debuff_pick1), align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.goto(0, 50)
+  upgrade_writer.write("2: " + str(debuff_pick2), align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.goto(0, 0)
+  upgrade_writer.write("3: " + str(debuff_pick3), align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.goto(0, 150)
+  debuff_chosen = str(trtl.textinput("Choose a curse.", "Enter 1,2, or 3"))
+  while debuff_chosen not in debuff_list:
+    if debuff_chosen == "1":
+      debuff_chosen = debuff_pick1
+      break
+    elif debuff_chosen == "2":
+      debuff_chosen = debuff_pick2
+      break
+    elif debuff_chosen == "3":
+      debuff_chosen = debuff_pick3
+      break
+    else:
+      debuff_chosen = trtl.textinput("Choose a curse.", "Enter 1,2, or 3")
+  if debuff_chosen == "add small enemy":
+    size_list.append("small")
+  elif debuff_chosen == "small enemy turns into big enemy":
+    added_enemy = size_list.pop(0)
+    if added_enemy == "small":
+      size_list.append("big")
+    if added_enemy == "big":
+      size_list.append("big")
+      size_list.append("big")
+  elif debuff_chosen == "2x small enemy health":
+    initial_small_enemy_health *= 2
+  elif debuff_chosen == "2x big enemy health":
+    initial_big_enemy_health *= 2
+  debuff_list.append(debuff_pick1)
+  debuff_list.append(debuff_pick2)
+  debuff_list.append(debuff_pick3)
+  upgrade_writer.clear()
+
 #----------------------------------------------------------#
 
 #------------------Events----------------#
@@ -237,9 +293,6 @@ wn.listen()
 wn.onclick(shot_vfx)
 
 wn.onkeypress(reload, "r")
-
-
-
 
 wn.setup(width=500, height=500)
 wn.cv._rootwindow.resizable(False, False)
