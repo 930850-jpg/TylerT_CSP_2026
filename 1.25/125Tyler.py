@@ -6,6 +6,7 @@ import time
 import keyboard as kb
 wn = trtl.Screen()
 wn.tracer(0)
+wn.title(" ")
 #---------------------------#
 
 #--------------Custom shapes and images-----------------#
@@ -26,19 +27,21 @@ size_list = ["small", "small", "small", "small", "small"]
 initial_small_enemy_health = 1
 small_enemy_health = 1
 big_enemy_health = 5
+enemy_damage = 1
 initial_big_enemy_health = 5
 small_enemy_list = []
 big_enemy_list = []
+attack_timer = 15000
 #----#
 wave = 0
-wave_timer = 15000
 small_defeated = 0
 big_defeated = 0
 ammo_after_wave = 5
 #----#
-upgrade_list = ["+1 to weapon damage", "+1 ammo to barrel", "+25 health", "+5 extra ammo every wave","wave timer increase by 5"]
-late_upgrade_list = ["lower enemy health by 2", "faster reload by 0.5", "remove a small enemy"]
-debuff_list = ["add small enemy", "small enemy turns into big enemy", "2x small enemy health", "2x big enemy health"]
+upgrade_list = ["+1 to weapon damage", "+1 ammo to barrel", "+25 health", "+5 extra ammo every wave","enemy attack timer increase by 2"]
+late_upgrade_list = ["lower enemy health by 2", "faster reload by 0.5", "remove a enemy but lose 1 dmg"]
+debuff_list = ["add small enemy", "small enemy turns into big enemy", "2x small enemy health", "2x big enemy health", "+1 enemy damage"]
+font = ("Arial", 20, "normal")
 #-----------------------------------#
 
 #-----Initialize Turtles for writing and sprites-----#
@@ -46,6 +49,10 @@ ammo_counter = trtl.Turtle()
 ammo_counter.hideturtle()
 ammo_counter.penup()
 ammo_counter.goto(160,-225)
+damage_counter = trtl.Turtle()
+damage_counter.hideturtle()
+damage_counter.penup()
+damage_counter.goto(0,-225)
 health_counter = trtl.Turtle()
 health_counter.hideturtle()
 health_counter.penup()
@@ -77,13 +84,15 @@ for s in shot_color_list:
 #--------------------Functions------------------------------#
 def update_counters():
   ammo_counter.clear()
+  damage_counter.clear()
   reloader.clear()
   health_counter.clear()
   wave_counter.clear()
-  ammo_counter.write("Ammo: " + str(ammo), align='center', font=("Arial", 20, "normal"))
-  reloader.write(str(loaded_ammo) + "/" + str(max_ammo_loaded), align='center', font=("Arial", 20, "normal"))
-  health_counter.write("Health: " + str(health), align='center', font=("Arial", 20, "normal"))
-  wave_counter.write("Wave: " + str(wave), align='center', font=("Arial", 20, "normal"))
+  ammo_counter.write("Ammo: " + str(ammo), align='center', font=font)
+  damage_counter.write("Damage: " + str(damage), align='center', font=font)
+  reloader.write(str(loaded_ammo) + "/" + str(max_ammo_loaded), align='center', font=font)
+  health_counter.write("Health: " + str(health), align='center', font=font)
+  wave_counter.write("Wave: " + str(wave), align='center', font=font)
 
 def new_enemies():
   global enemy, big_enemy, small_enemy_list, big_enemy_list
@@ -175,37 +184,59 @@ def new_wave():
   wave += 1
   wn.listen()
   update_counters()
+  wn.ontimer(take_damage,attack_timer)
   new_enemies()
   move_enemies()
 
 def end_wave():
   global ammo, loaded_ammo, max_ammo_loaded, small_defeated, big_defeated
+  update_counters()
   small_defeated = 0
   big_defeated = 0
   ammo += ammo_after_wave
   loaded_ammo = max_ammo_loaded
   wave_counter.clear()
   wave_counter.write("WAVE: " + str(wave) + " DEFEATED", align='center', font=("Arial", 20, "normal"))
+  if wave % 5 == 0:
+    if late_upgrade_list != []:
+      add_upgrade = rand.choice(late_upgrade_list)
+      late_upgrade_list.remove(add_upgrade)
+      upgrade_list.append(add_upgrade)
   upgrades()
   if wave % 2 == 0:
     debuffs()
   new_wave()
 
-def upgrades():
-  global ammo_after_wave, damage, health, max_ammo_loaded, wave_timer
+def take_damage():
+  global health, small_enemy_list, big_enemy_list
+  wn.bgcolor("red")
+  active_enemies = len(small_enemy_list) + len(big_enemy_list)
+  health -= enemy_damage*active_enemies
+  for enemy in small_enemy_list:
+    enemy.hideturtle()
+  for big_enemy in big_enemy_list: 
+    big_enemy.hideturtle()
+  big_enemy_list = []
+  small_enemy_list = []
+  wn.bgcolor("white")
+  end_wave()
+
+def upgrades():  #Allows the user to pick upgrades every wave
+  global ammo_after_wave, damage, health, max_ammo_loaded, wave_timer, small_enemy_health, big_enemy_health, reload_delay
   upgrade_pick1 = rand.choice(upgrade_list)
   upgrade_list.remove(upgrade_pick1)
   upgrade_pick2 = rand.choice(upgrade_list)
   upgrade_list.remove(upgrade_pick2)
   upgrade_pick3 = rand.choice(upgrade_list)
-  upgrade_list.remove(upgrade_pick3)
-  upgrade_writer.write("Upgrades:", align='center', font=("Arial", 20, "normal"))
+  upgrade_list.append(upgrade_pick1)
+  upgrade_list.append(upgrade_pick2)
+  upgrade_writer.write("Upgrades:", align='center', font=font)
   upgrade_writer.goto(0, 100)
-  upgrade_writer.write("1: " + str(upgrade_pick1), align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.write("1: " + str(upgrade_pick1), align='center', font=font)
   upgrade_writer.goto(0, 50)
-  upgrade_writer.write("2: " + str(upgrade_pick2), align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.write("2: " + str(upgrade_pick2), align='center', font=font)
   upgrade_writer.goto(0, 0)
-  upgrade_writer.write("3: " + str(upgrade_pick3), align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.write("3: " + str(upgrade_pick3), align='center', font=font)
   upgrade_writer.goto(0, 150)
   upgrade_chosen = str(trtl.textinput("Which upgrade are you choosing?", "Enter 1,2, or 3"))
   while upgrade_chosen not in upgrade_list:
@@ -228,22 +259,33 @@ def upgrades():
     health +=25
   elif upgrade_chosen == "+5 extra ammo every wave":
     ammo_after_wave += 5
-  elif upgrade_chosen == "wave timer increase by 5":
-    wave_timer += 5000
-  upgrade_list.append(upgrade_pick1)
-  upgrade_list.append(upgrade_pick2)
-  upgrade_list.append(upgrade_pick3)
+  elif upgrade_chosen == "enemy attack timer increase by 2":
+    wave_timer += 2000
+  # Upgrades that come in later waves
+  elif upgrade_chosen == "lower enemy health by 2":
+    small_enemy_health -= 2
+    big_enemy_health -= 2
+    upgrade_list.remove("lower enemy health by 2")
+    late_upgrade_list.append("lower enemy health by 2") 
+  elif upgrade_chosen == "faster reload by 0.5":
+    reload_delay -= 0.5
+    upgrade_list.remove("faster reload by 0.5")
+  elif upgrade_chosen == "remove a enemy but lose 1 dmg":
+    size_list.pop(0)
+    damage -= 1
+    upgrade_list.remove("remove a enemy but lose 1 dmg")
+    late_upgrade_list.append("remove a enemy but lose 1 dmg")
   upgrade_writer.clear()
 
-def debuffs():
-  global ammo_after_wave, damage, health, max_ammo_loaded, wave_timer, initial_big_enemy_health, initial_small_enemy_health, size_list
+def debuffs():  #User is forced to pick a debuff every 2 waves
+  global ammo_after_wave, damage, health, max_ammo_loaded, wave_timer, initial_big_enemy_health, initial_small_enemy_health, size_list, enemy_damage
   debuff_pick1 = rand.choice(debuff_list)
   debuff_list.remove(debuff_pick1)
   debuff_pick2 = rand.choice(debuff_list)
   debuff_list.remove(debuff_pick2)
   debuff_pick3 = rand.choice(debuff_list)
   debuff_list.remove(debuff_pick3)
-  upgrade_writer.write("Upgrades:", align='center', font=("Arial", 20, "normal"))
+  upgrade_writer.write("Curses:", align='center', font=("Arial", 20, "normal"))
   upgrade_writer.goto(0, 100)
   upgrade_writer.write("1: " + str(debuff_pick1), align='center', font=("Arial", 20, "normal"))
   upgrade_writer.goto(0, 50)
@@ -277,6 +319,8 @@ def debuffs():
     initial_small_enemy_health *= 2
   elif debuff_chosen == "2x big enemy health":
     initial_big_enemy_health *= 2
+  elif debuff_chosen == "+1 enemy damage":
+    enemy_damage += 1
   debuff_list.append(debuff_pick1)
   debuff_list.append(debuff_pick2)
   debuff_list.append(debuff_pick3)
@@ -291,7 +335,7 @@ new_wave()
 wn.listen()
 
 wn.onclick(shot_vfx)
-
+wn.ontimer(take_damage,attack_timer)
 wn.onkeypress(reload, "r")
 
 wn.setup(width=500, height=500)
