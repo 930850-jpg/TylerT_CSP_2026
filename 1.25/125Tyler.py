@@ -31,9 +31,11 @@ enemy_damage = 1
 initial_big_enemy_health = 5
 small_enemy_list = []
 big_enemy_list = []
-attack_timer = 15000
+attack_increment= 15 
+timer_increments = 0
 #----#
 wave = 0
+wave_in_progress = 0
 small_defeated = 0
 big_defeated = 0
 ammo_after_wave = 5
@@ -180,17 +182,19 @@ def reload():
     update_counters()
 
 def new_wave():
-  global wave
+  global wave, wave_in_progress
   wave += 1
+  wave_in_progress = 1
   wn.listen()
   update_counters()
-  wn.ontimer(take_damage,attack_timer)
+  wn.ontimer(timer,1000)
   new_enemies()
   move_enemies()
 
 def end_wave():
-  global ammo, loaded_ammo, max_ammo_loaded, small_defeated, big_defeated
+  global ammo, loaded_ammo, max_ammo_loaded, small_defeated, big_defeated, wave_in_progress
   update_counters()
+  wave_in_progress = 0
   small_defeated = 0
   big_defeated = 0
   ammo += ammo_after_wave
@@ -207,19 +211,32 @@ def end_wave():
     debuffs()
   new_wave()
 
+def timer():
+  if wave_in_progress == 1:
+    timer_increments += 1
+    if timer_increments == attack_increment:
+      take_damage()
+      timer_increments = 0
+
 def take_damage():
   global health, small_enemy_list, big_enemy_list
   wn.bgcolor("red")
+  time.sleep(0.25)
   active_enemies = len(small_enemy_list) + len(big_enemy_list)
   health -= enemy_damage*active_enemies
-  for enemy in small_enemy_list:
-    enemy.hideturtle()
-  for big_enemy in big_enemy_list: 
-    big_enemy.hideturtle()
+  update_counters()
+  wn.bgcolor("white")
+  if health <= 0:
+    game_over()
+
+def game_over():
+  global big_enemy_list, small_enemy_list
+  wn.clearscreen()
+  game_over_writer = trtl.Turtle()
+  game_over_writer.hideturtle()
   big_enemy_list = []
   small_enemy_list = []
-  wn.bgcolor("white")
-  end_wave()
+  game_over_writer.write("Game Over", align="center", font=("Arial", 40, "normal"))
 
 def upgrades():  #Allows the user to pick upgrades every wave
   global ammo_after_wave, damage, health, max_ammo_loaded, wave_timer, small_enemy_health, big_enemy_health, reload_delay
@@ -335,7 +352,6 @@ new_wave()
 wn.listen()
 
 wn.onclick(shot_vfx)
-wn.ontimer(take_damage,attack_timer)
 wn.onkeypress(reload, "r")
 
 wn.setup(width=500, height=500)
