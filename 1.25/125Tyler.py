@@ -5,7 +5,6 @@ from functools import partial
 import time
 import keyboard as kb
 wn = trtl.Screen()
-wn.tracer(0)
 wn.title(" ")
 #---------------------------#
 
@@ -16,74 +15,83 @@ wn.register_shape("explosion", explosion)
 #-------------------------------------------------------#
 
 #------Initialize Variables---------#
-ammo = 10
-loaded_ammo = 2
-max_ammo_loaded = 2
-reload_delay = 1
-damage = 1
-health = 100
+def reset_variables():
+  global ammo, loaded_ammo, max_ammo_loaded, reload_delay, damage, health 
+  ammo = 10
+  loaded_ammo = 2
+  max_ammo_loaded = 2
+  reload_delay = 1
+  damage = 1
+  health = 100
+  #----#
+  global size_list, initial_small_enemy_health, small_enemy_health, big_enemy_health, enemy_damage, initial_big_enemy_health, small_enemy_list, big_enemy_list, attack_increment, timer_increments
+  size_list = ["small", "small", "small", "small", "small"]
+  initial_small_enemy_health = 1
+  small_enemy_health = 1
+  big_enemy_health = 5
+  enemy_damage = 1
+  initial_big_enemy_health = 5
+  small_enemy_list = []
+  big_enemy_list = []
+  attack_increment= 15 
+  timer_increments = 0
+  #----#
+  global wave, wave_in_progress, small_defeated, big_defeated, ammo_after_wave
+  wave = 0
+  wave_in_progress = 0
+  small_defeated = 0
+  big_defeated = 0
+  ammo_after_wave = 5
+  #----#
+  global upgrade_list, late_upgrade_list, debuff_list
+  upgrade_list = ["+1 to weapon damage", "+1 ammo to barrel", "+25 health", "+5 extra ammo every wave","enemy attack timer increase by 2"]
+  late_upgrade_list = ["lower enemy health by 2", "faster reload by 0.5", "remove a enemy but lose 1 dmg"]
+  debuff_list = ["add small enemy", "small enemy turns into big enemy", "2x small enemy health", "2x big enemy health", "+1 enemy damage"]
 #----#
-size_list = ["small", "small", "small", "small", "small"]
-initial_small_enemy_health = 1
-small_enemy_health = 1
-big_enemy_health = 5
-enemy_damage = 1
-initial_big_enemy_health = 5
-small_enemy_list = []
-big_enemy_list = []
-attack_increment= 15 
-timer_increments = 0
-#----#
-wave = 0
-wave_in_progress = 0
-small_defeated = 0
-big_defeated = 0
-ammo_after_wave = 5
-#----#
-upgrade_list = ["+1 to weapon damage", "+1 ammo to barrel", "+25 health", "+5 extra ammo every wave","enemy attack timer increase by 2"]
-late_upgrade_list = ["lower enemy health by 2", "faster reload by 0.5", "remove a enemy but lose 1 dmg"]
-debuff_list = ["add small enemy", "small enemy turns into big enemy", "2x small enemy health", "2x big enemy health", "+1 enemy damage"]
 font = ("Arial", 20, "normal")
+small_font = ("Arial", 15, "normal")
 #-----------------------------------#
 
 #-----Initialize Turtles for writing and sprites-----#
-ammo_counter = trtl.Turtle()
-ammo_counter.hideturtle()
-ammo_counter.penup()
-ammo_counter.goto(160,-225)
-damage_counter = trtl.Turtle()
-damage_counter.hideturtle()
-damage_counter.penup()
-damage_counter.goto(0,-225)
-health_counter = trtl.Turtle()
-health_counter.hideturtle()
-health_counter.penup()
-health_counter.goto(-160,-225)
-reloader = trtl.Turtle()
-reloader.hideturtle()
-reloader.penup()
-reloader.goto(160,-200)
-wave_counter = trtl.Turtle()
-wave_counter.hideturtle()
-wave_counter.penup()
-wave_counter.goto(-5,200)
-upgrade_writer = trtl.Turtle()
-upgrade_writer.hideturtle()
-upgrade_writer.penup()
-upgrade_writer.goto(0,150)
-shot_color_list = ["yellow" ,"maroon", "orange"]
-shot_sprite_list = []
-for s in shot_color_list:
-  shot_sprite = trtl.Turtle(shape="explosion")
-  color = shot_color_list.pop()
-  shot_sprite.speed(0)
-  shot_sprite.penup()
-  shot_sprite.fillcolor(color)
-  shot_sprite_list.append(shot_sprite)
-  shot_sprite.hideturtle()
+def initialize_turtles():
+  global ammo_counter, damage_counter, health_counter, reloader, wave_counter, upgrade_writer,shot_sprite_list
+  ammo_counter = trtl.Turtle()
+  ammo_counter.hideturtle()
+  ammo_counter.penup()
+  ammo_counter.goto(160,-225)
+  damage_counter = trtl.Turtle()
+  damage_counter.hideturtle()
+  damage_counter.penup()
+  damage_counter.goto(0,-225)
+  health_counter = trtl.Turtle()
+  health_counter.hideturtle()
+  health_counter.penup()
+  health_counter.goto(-160,-225)
+  reloader = trtl.Turtle()
+  reloader.hideturtle()
+  reloader.penup()
+  reloader.goto(160,-200)
+  wave_counter = trtl.Turtle()
+  wave_counter.hideturtle()
+  wave_counter.penup()
+  wave_counter.goto(-5,200)
+  upgrade_writer = trtl.Turtle()
+  upgrade_writer.hideturtle()
+  upgrade_writer.penup()
+  upgrade_writer.goto(0,150)
+  shot_color_list = ["yellow" ,"maroon", "orange"]
+  shot_sprite_list = []
+  for s in shot_color_list:
+    shot_sprite = trtl.Turtle(shape="explosion")
+    color = shot_color_list.pop()
+    shot_sprite.speed(0)
+    shot_sprite.penup()
+    shot_sprite.fillcolor(color)
+    shot_sprite_list.append(shot_sprite)
+    shot_sprite.hideturtle()
 #----------------------------------------------------#
 
-#--------------------Functions------------------------------#
+#--------------------Game Functions----------------------#
 def update_counters():
   ammo_counter.clear()
   damage_counter.clear()
@@ -92,7 +100,7 @@ def update_counters():
   wave_counter.clear()
   ammo_counter.write("Ammo: " + str(ammo), align='center', font=font)
   damage_counter.write("Damage: " + str(damage), align='center', font=font)
-  reloader.write(str(loaded_ammo) + "/" + str(max_ammo_loaded), align='center', font=font)
+  reloader.write(str(loaded_ammo) + "/" + str(max_ammo_loaded), align='center', font=small_font)
   health_counter.write("Health: " + str(health), align='center', font=font)
   wave_counter.write("Wave: " + str(wave), align='center', font=font)
 
@@ -192,9 +200,10 @@ def new_wave():
   move_enemies()
 
 def end_wave():
-  global ammo, loaded_ammo, max_ammo_loaded, small_defeated, big_defeated, wave_in_progress
+  global ammo, loaded_ammo, max_ammo_loaded, small_defeated, big_defeated, wave_in_progress, timer_increments
   update_counters()
   wave_in_progress = 0
+  timer_increments = 0
   small_defeated = 0
   big_defeated = 0
   ammo += ammo_after_wave
@@ -212,16 +221,17 @@ def end_wave():
   new_wave()
 
 def timer():
+  global timer_increments, wave_in_progress, attack_increment
   if wave_in_progress == 1:
     timer_increments += 1
     if timer_increments == attack_increment:
       take_damage()
       timer_increments = 0
+    wn.ontimer(timer,1000)
 
 def take_damage():
   global health, small_enemy_list, big_enemy_list
   wn.bgcolor("red")
-  time.sleep(0.25)
   active_enemies = len(small_enemy_list) + len(big_enemy_list)
   health -= enemy_damage*active_enemies
   update_counters()
@@ -234,12 +244,17 @@ def game_over():
   wn.clearscreen()
   game_over_writer = trtl.Turtle()
   game_over_writer.hideturtle()
+  game_over_writer.penup()
   big_enemy_list = []
   small_enemy_list = []
   game_over_writer.write("Game Over", align="center", font=("Arial", 40, "normal"))
+  game_over_writer.goto(0,-20)
+  game_over_writer.write("Wave Reached: " + str(wave), align="center", font=small_font)
+  game_over_writer.goto(0,-40)
+  #game_over_writer.write("Click Anywhere to restart", align="center", font=small_font) #Not adding this just yet
 
 def upgrades():  #Allows the user to pick upgrades every wave
-  global ammo_after_wave, damage, health, max_ammo_loaded, wave_timer, small_enemy_health, big_enemy_health, reload_delay
+  global ammo_after_wave, damage, health, max_ammo_loaded, attack_increment, small_enemy_health, big_enemy_health, reload_delay
   upgrade_pick1 = rand.choice(upgrade_list)
   upgrade_list.remove(upgrade_pick1)
   upgrade_pick2 = rand.choice(upgrade_list)
@@ -277,7 +292,7 @@ def upgrades():  #Allows the user to pick upgrades every wave
   elif upgrade_chosen == "+5 extra ammo every wave":
     ammo_after_wave += 5
   elif upgrade_chosen == "enemy attack timer increase by 2":
-    wave_timer += 2000
+    attack_increment += 2
   # Upgrades that come in later waves
   elif upgrade_chosen == "lower enemy health by 2":
     small_enemy_health -= 2
@@ -343,13 +358,17 @@ def debuffs():  #User is forced to pick a debuff every 2 waves
   debuff_list.append(debuff_pick3)
   upgrade_writer.clear()
 
+def start_game():
+  wn.tracer(0)
+  initialize_turtles()
+  reset_variables()
+  wn.tracer(1)
+  new_wave()
+
 #----------------------------------------------------------#
 
 #------------------Events----------------#
-wn.tracer(1)
-new_wave()
-
-wn.listen()
+start_game()
 
 wn.onclick(shot_vfx)
 wn.onkeypress(reload, "r")
