@@ -12,6 +12,8 @@ wn.title(" ")
 explosion = ((0, 10), (5, 8), (10, 10), (8, 5), 
     (10, 0), (8, -5), (10, -10), (5, -8), (0,-10), (-5,-8), (-10,-10), (-8,-5),(-10,0), (-8,5), (-10, 10), (-5,8))
 wn.register_shape("explosion", explosion)
+rectangle = ((20,10), (20,-10),(-20,-10),(-20,10))
+wn.register_shape("button", rectangle)
 #-------------------------------------------------------#
 
 #------Initialize Variables---------#
@@ -251,7 +253,8 @@ def game_over():
   game_over_writer.goto(0,-20)
   game_over_writer.write("Wave Reached: " + str(wave), align="center", font=small_font)
   game_over_writer.goto(0,-40)
-  #game_over_writer.write("Click Anywhere to restart", align="center", font=small_font) #Not adding this just yet
+  game_over_writer.write("Click Anywhere to restart", align="center", font=small_font) 
+  wn.onclick(start_game)
 
 def upgrades():  #Allows the user to pick upgrades every wave
   global ammo_after_wave, damage, health, max_ammo_loaded, attack_increment, small_enemy_health, big_enemy_health, reload_delay
@@ -358,19 +361,35 @@ def debuffs():  #User is forced to pick a debuff every 2 waves
   debuff_list.append(debuff_pick3)
   upgrade_writer.clear()
 
-def start_game():
+def start_game(x,y):
   wn.tracer(0)
+  wn.clearscreen()
   initialize_turtles()
   reset_variables()
   wn.tracer(1)
+  wn.onkeypress(reload, "r")
   new_wave()
+
+def title_screen(): 
+  wn.tracer(0)
+  title_screen_writer = trtl.Turtle(shape="button")
+  title_screen_writer.shapesize(4)
+  title_screen_writer.penup()
+  title_screen_writer.goto(0, 175)
+  title_screen_writer.write("Title", align="center", font=("Arial", 40, "normal"))
+  title_screen_writer.setheading(90)
+  title_screen_writer.fillcolor("lime")
+  title_screen_writer.goto(0,-15)
+  title_screen_writer.write("Start", align="center", font=font)
+  title_screen_writer.goto(0,0)
+  wn.tracer(1)
+  title_screen_writer.onclick(start_game)
 
 #----------------------------------------------------------#
 
 #------------------Events----------------#
-start_game()
+title_screen()
 
-wn.onclick(shot_vfx)
 wn.onkeypress(reload, "r")
 
 wn.setup(width=500, height=500)
