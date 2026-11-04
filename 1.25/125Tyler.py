@@ -12,8 +12,6 @@ wn.title(" ")
 explosion = ((0, 10), (5, 8), (10, 10), (8, 5), 
     (10, 0), (8, -5), (10, -10), (5, -8), (0,-10), (-5,-8), (-10,-10), (-8,-5),(-10,0), (-8,5), (-10, 10), (-5,8))
 wn.register_shape("explosion", explosion)
-rectangle = ((20,10), (20,-10),(-20,-10),(-20,10))
-wn.register_shape("button", rectangle)
 #-------------------------------------------------------#
 
 #------Initialize Variables---------#
@@ -35,7 +33,7 @@ def reset_variables():
   initial_big_enemy_health = 5
   small_enemy_list = []
   big_enemy_list = []
-  attack_increment= 15 
+  attack_increment= 10
   timer_increments = 0
   #----#
   global wave, wave_in_progress, small_defeated, big_defeated, ammo_after_wave
@@ -143,6 +141,7 @@ def small_enemy_shot(enemy, x, y):
     if loaded_ammo != 0:
       loaded_ammo -= 1
       small_enemy_health -= damage
+      shot_vfx(x,y)
       update_counters()
       if clicked_enemy in small_enemy_list:
         if small_enemy_health <=0:
@@ -164,6 +163,7 @@ def big_enemy_shot(big_enemy, x, y):
     if loaded_ammo != 0:
       loaded_ammo -= 1
       big_enemy_health -= damage
+      shot_vfx(x,y)
       update_counters()
       if clicked_enemy in big_enemy_list:
         if big_enemy_health <= 0:
@@ -192,12 +192,14 @@ def reload():
     update_counters()
 
 def new_wave():
-  global wave, wave_in_progress
+  global wave, wave_in_progress, big_enemy_health, small_enemy_health
   wave += 1
   wave_in_progress = 1
   wn.listen()
   update_counters()
   wn.ontimer(timer,1000)
+  small_enemy_health = initial_small_enemy_health
+  big_enemy_health = initial_big_enemy_health
   new_enemies()
   move_enemies()
 
@@ -292,10 +294,12 @@ def upgrades():  #Allows the user to pick upgrades every wave
     max_ammo_loaded +=1
   elif upgrade_chosen == "+25 health":
     health +=25
-  elif upgrade_chosen == "+5 extra ammo every wave":
-    ammo_after_wave += 5
+  elif upgrade_chosen == "+2 extra ammo every wave":
+    ammo_after_wave += 2
   elif upgrade_chosen == "enemy attack timer increase by 2":
     attack_increment += 2
+    if attack_increment == 20:
+      upgrade_list.remove("enemy attack timer increase by 2")
   # Upgrades that come in later waves
   elif upgrade_chosen == "lower enemy health by 2":
     small_enemy_health -= 2
@@ -340,7 +344,7 @@ def debuffs():  #User is forced to pick a debuff every 2 waves
       debuff_chosen = debuff_pick3
       break
     else:
-      debuff_chosen = trtl.textinput("Choose a curse.", "Enter 1,2, or 3")
+      debuff_chosen = str(trtl.textinput("Choose a curse.", "Enter 1,2, or 3"))
   if debuff_chosen == "add small enemy":
     size_list.append("small")
   elif debuff_chosen == "small enemy turns into big enemy":
@@ -372,18 +376,15 @@ def start_game(x,y):
 
 def title_screen(): 
   wn.tracer(0)
-  title_screen_writer = trtl.Turtle(shape="button")
-  title_screen_writer.shapesize(4)
+  title_screen_writer = trtl.Turtle()
   title_screen_writer.penup()
-  title_screen_writer.goto(0, 175)
+  title_screen_writer.goto(0, 20)
   title_screen_writer.write("Title", align="center", font=("Arial", 40, "normal"))
-  title_screen_writer.setheading(90)
-  title_screen_writer.fillcolor("lime")
-  title_screen_writer.goto(0,-15)
-  title_screen_writer.write("Start", align="center", font=font)
   title_screen_writer.goto(0,0)
+  title_screen_writer.write("Click Anywhere to start", align="center", font=small_font) 
+  title_screen_writer.hideturtle()
   wn.tracer(1)
-  title_screen_writer.onclick(start_game)
+  wn.onclick(start_game)
 
 #----------------------------------------------------------#
 
